@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Distributed Message Queue}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Step1}
+Understand the problem and establish the design scope\\
+traditional MQ: does not retain messages once delivered\\
+Delivery semantics:\\
+\begin{itemize}
+    \item at most once
+    \item at least once
+    \item exact once
+\end{itemize}
+procedure:\\
+\begin{itemize}
+    \item producer send msgs to MQ
+    \item consumer consumes msgs from MQ
+    \item msg can be repeated or once
+    \item historical data can be truncated (do not lose it in 2 weeks)
+    \item msg size kbs
+    \item deliver in the same order
+    \item delivery semantics
+\end{itemize}
+\section{Step2}
+Propose High-Level Design\\
+Msg model:\\
+\begin{itemize}
+    \item Point-to-point:\\
+    one msg into MQ and consumed by a single customer
+    \item Publish-Subscribe:\\
+    topics, partitions, brokers\\
+    if writing in order, we can guarantee it received in order\\
+    consumer group: one in the group receives one topic partition
+\end{itemize}
+High-Level Architecture:\\
+Apache zookeeper\\
+\section{Step3}
+Design Deep Dive\\
+data storage:
+read heavy and write heavy\\
+no very suitable database: use write-ahead log (WAL) sequentially on disk\\
+Batching:\\
+can happen in producer, MQ, consumer\\
+Cosumer flow:\\
+How to get msg from MQ:\\
+\begin{itemize}
+    \item push mode:\\
+    MQ pushes to consumer w/o knowing if consumer has capacity
+    \item pull mode:\\
+    consumer actively read from MQ and add to offset
+\end{itemize}
+MQ replication:\\
+in-sync replica (ISR):\\
+a broker has several replicas to guarantee availability\\
+producer send to one lead broker\\
+this broker forward the msg to other replicas:\\
+get ACK from its replica:\\
+\begin{itemize}
+    \item ACK = all\\
+    make sure all the replica has received the msg
+    \item ACK = 1\\
+    this 1 comes from the lead, meaning producer does not monitor how the lead forwards to replicas
+    \item ACK = 0\\
+    producer sends msg, and does not wait for MQ to respond
+\end{itemize}
+Delivery semantics:\\
+\begin{itemize}
+    \item at-most once\\
+    \begin{itemize}
+        \item producer send to MQ once, and deletes it
+        \item consumer fetch from MQ, and send response to MQ before consumer processes data. So even if consumer process fails, it cannot fetch the same msg from MQ again.
+    \end{itemize}
+    \item at-least once
+    \begin{itemize}
+        \item producer sends msg to MQ and wait for AKC > 0
+        \item consumer fetches msg and process the data. After processing success, send response to MQ to move offset.
+    \end{itemize}
+    \item exactly once
+\end{itemize}
+\end{document}

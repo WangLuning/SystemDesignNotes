@@ -1,0 +1,107 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Proximity Service}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Step1}
+Understand Problem and Establish Design Scope\\
+Functional Requirements:\\
+\begin{itemize}
+    \item return all businesses based on user lat log and radius
+    \item update/add/delete business by business owner
+    \item customer views detail about a business
+\end{itemize}
+Nonfunctional requirements:\\
+\begin{itemize}
+    \item low latency
+    \item high availability and scalability
+    \item data privacy
+\end{itemize}
+QPS estimation:\\
+\begin{itemize}
+    \item 100 million user per day
+    \item 5 times per user
+    \item business owner operation times negligible
+    \item $QPS = \frac{100million * 5}{86400} = 5000$
+\end{itemize}
+
+\section{Step2}
+\subsection{Propose High-level Design}
+\begin{itemize}
+    \item API Design\\
+    RESTful API
+    \item High-level Design\\
+    users call location-based service\\
+    business owners call business service\\
+    \item algorithm for finding nearby services\\
+    (expanded later)\\
+    \item Data model\\
+    it is read heavy model, so we can use relational db (mysql etc).\\
+    using business\_id as key\\
+\end{itemize}
+\subsection{Expand on location-based service (LBS)}
+stateless, easy to scale\\
+\begin{itemize}
+    \item two\_dimensional search\\
+    use SQL WHERE to query for both lat and long\\
+    WHERE Lat BETWEEN LatRange AND Long BETWEEN LongRange\\
+    \begin{itemize}
+        \item Good: Easy to implement and understand
+        \item Bad: query involves too many data from db
+    \end{itemize}
+    \item evenly\_devided grid:\\
+    devide all the world into fixed small grids\\
+    \begin{itemize}
+        \item Good: easy to understand and find the grid
+        \item Bad: waste of memory, some grid in the sea, never used
+    \end{itemize}
+    \item GeoHash:\\
+    divide using different precision\\
+    biggest grid: 00, 01, 10, 11\\
+    if a grid has too many business, divide it further:\\
+    0101, 0100, 0110, 0111\\
+    \begin{itemize}
+        \item Good: easy to scale with precision (length of binary string)
+        \item Bad: zoom level is fixed, has boundary issue:\\
+        \begin{itemize}
+            \item 0100 and 0001 are adjacent but do not share prefix
+            \item if there is not enough business in the grid, we need to expand to the adjacent grid
+            \item A solution: while in a grid, mathematically compute the adjacent 8 grids GeoHash value and add them all to the API, so won't miss anything
+        \end{itemize}
+    \end{itemize}
+    \item QuadTree:\\
+    in-memory structure, need to create a tree\\
+    GeoHash is just a structless table\\
+    Memory estimation:\\
+    \begin{itemize}
+        \item if 200 million business in our db\\
+        \item each leaf node contains an area with 100 businesses\\
+        \item each leaf node size ~800 bytes\\
+        \item each internal node size ~100 bytes\\
+        \item number of internal node is $\frac{1}{3}$ of leaf nodes\\
+        \item in-memory storage is: $\frac{200 million}{100}* 800 + \frac{200 million}{100}*\frac{1}{3}*100 = 2GB$\\
+        it can fit in memory well.\\
+    \end{itemize}
+    \begin{itemize}
+        \item Good: fit it in the table and query
+        \item Bad: Need to build at server start-up time, might take minutes\\
+        if business add or delete, need to go down the tree and fix the node\\
+    \end{itemize}
+    \item Google S2\\
+    Some mapping from map to 1D space\\
+\end{itemize}
+\section{Step3}
+Design deep dive\\
+\subsection{scale the database}
+the db is small, do not need to shard\\
+just use replica to replicate thru machines to ease read traffic\\
+\subsection{use caching}
+it can fit in memory\\
+can use redis cache: ${geoHash, business_id}$ to get business detail for a specific user request
+\end{document}

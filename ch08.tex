@@ -1,0 +1,107 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Distributed Email Service}
+\author{xxx}
+\date{April 2023}
+
+\begin{document}
+\maketitle
+What is the same as class design:
+\begin{itemize}
+    \item protocols
+    \item API functions
+    \item send
+    \item receive
+\end{itemize}
+what is different from class design:
+\begin{itemize}
+    \item data storage
+    \item scaling the system
+    \item search email in your own office
+\end{itemize}
+\section{Step 1}
+Understand the Problem and Establish Design Scope
+\begin{itemize}
+    \item send and receive email
+    \item fetch emails actively
+    \item search emails by keywords etc
+    \item spam detection
+\end{itemize}
+Traffic estimation:\\
+1 billion DAU\\
+send out 10 mails, receive 40 emails, with 50KB metadata size each\\
+\begin{equation}
+    QPS = \frac{1 billion * 10}{10^5 s} = 100,000\\
+\end{equation}
+store received emails size:\\
+\begin{equation}
+    1 billion * 40 * 365 days * 50kB = 730PB\\
+\end{equation}
+\section{Step 2}
+Propose High-Level Design and Get Buy-in\\
+email basics:
+\begin{itemize}
+    \item SMTP: a sending protocol
+    \item POP: Post Office Protocol, once send a whole mail body to user, delete it from server
+    \item IMAP: internet mail access protocol\\
+    only downloads header when connection is slow\\
+    does not delete mail from server\\
+\end{itemize}
+\textbf{DNS}:\\
+server size is large, decide which server to use\\
+defined by priority number\\
+So:\\
+send protocol SMTP, get protocol IMAP/POP\\
+API design:
+\begin{itemize}
+    \item POST/v1/messages
+    \item GET/v1/folders
+    \item $GET/v1/folders/{:folder\_id}/messages$
+    \item $GET/v1/ messages/{:message\_id}$
+\end{itemize}
+distributed mail server architecture:\\
+two ways of connecting to server:\\
+\begin{itemize}
+    \item web servers: user send get request to server
+    \item real-time servers: push email to users in real-time
+\end{itemize}
+Storage layer:
+\begin{itemize}
+    \item metadata DB
+    \item attachment storage
+    \item distributed cache: users get recent mails
+    \item search storage: has its own indexing and search storage
+\end{itemize}
+\textbf{email sending flow}:\\
+webmail -> load balancer -> web server -> outgoing queue -> SMTP -> internet\\
+\textbf{email receiving flow}
+internet -> load balancer -> incoming queue -> mail processing (spam etc) -> real-time server / web server -> webmail\\
+\section{Step 3}
+\textbf{choose database}: data consistency, reduce disk I/O\\
+need a lot read / write\\
+write: send, delete causes re-indexing\\
+\begin{itemize}
+    \item relational database: not suitable for this large mail situation
+    \item distributed object store (s3): no good indexing
+    \item NoSQL, e.g. Google bigTable
+\end{itemize}
+\textbf{Process spam}:\\
+\begin{itemize}
+    \item dedicated IP
+    \item classify email
+    \item email sender reputation
+    \item ban spam
+    \item feedback processing
+\end{itemize}
+\textbf{Search}:\\
+characteristics:
+\begin{itemize}
+    \item scope: user's own mail box
+    \item sorting: by time, content etc
+    \item indexing should be near real time
+\end{itemize}
+Possible method: elastic Search or LSM\\
+\textbf{Scalability}:\\
+different data center in different countries
+\end{document}

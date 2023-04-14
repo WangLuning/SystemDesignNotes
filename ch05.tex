@@ -1,0 +1,67 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Metrics Monitoring and Alerting System}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+
+\maketitle
+
+The main idea of this chapter:\\
+\begin{itemize}
+    \item how to choose a proper databse
+    \item what is the connection between different components
+\end{itemize}
+\section{Step1}
+Understand the Problem and Establish Design Scope\\
+\begin{itemize}
+    \item data size: ~100 million per day
+    \item change resolution, down-sample old data
+    \item channel communication: HTTP
+    \item Special: it is about low level metrics, (e.g. CPU, memory), not high level metrics like QPS, coverage etc.
+\end{itemize}
+\section{Step2}
+Propose High-Level Design\\
+\begin{itemize}
+    \item data model:\\
+    choose a good database to store everything\\
+    use time series specialized DB, e.g Influx DB
+    \item High-level design:\\
+    \begin{itemize}
+        \item metrics source (the machines being monitored)
+        \item metrics collector (consider the channels, and data mode)
+        \begin{itemize}
+            \item push mode:\\
+            machines push to collectors, need a load balancer in between
+            \item pull mode:\\
+            collectors pull from machines, need a config to tell collectors which are the machines to collect from\\
+            Drawback: might miss short-lived jobs (it lives between two pull intervals)
+        \end{itemize}
+        \item time series DB (a mature product)
+        \item query service
+        \item visualization system
+        \item alert system
+    \end{itemize}
+\end{itemize}
+\section{Step3}
+Design Deep Dive:\\
+\subsection{1}
+How to scale between metrics sources and metrics collectors:\\
+use consistent hash ring\\
+can scale up and down collectors\\
+\subsection{2}
+How to scale metrics transmission pipeline between collectors and DB:\\
+use Kafka queue
+\subsection{3}
+where aggregation can happen:\\
+\begin{itemize}
+    \item collection agents: (inside metrics source, e.g. 1 min buffer)
+    \item ingestion pipeline\\
+    before writing into DB.\\
+    but this will lose the raw data\\
+    \item query side:\\
+    controlled by user
+\end{itemize}
+\end{document}

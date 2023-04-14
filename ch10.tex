@@ -1,0 +1,55 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Real-time Gaming Leaderboard}
+\author{xxx}
+\date{April 2023}
+
+\begin{document}
+\maketitle
+First think of it as single machine\\
+then think how to scale it as distributed\\
+\section{Step 1}
+Understand the Problem and Establish Design Scope\\
+\begin{itemize}
+    \item real-time update score once the user finishes a game
+    \item score reflected on leaderboard
+    \item leaderboard shows top 10 users
+    \item user find its ranking place in the leaderboard
+\end{itemize}
+Estimation:\\
+5 million DAU\\
+QPS: around 500 at peak time\\
+\section{Step 2}
+Propose High-level Design\\
+API design:\\
+\begin{itemize}
+    \item post user score once he finishes
+    \item get top 10 user scoreboard
+    \item get my own score
+\end{itemize}
+\textbf{High-level Architecture}
+\begin{itemize}
+    \item end user
+    \item game service: can use a message queue if there are multiple consumers\\
+    consumers include leaderboard service and notification service and analytics service etc.\\
+    \item leaderboard service: user do not send PUT request to this directly as not secure
+    \item leaderboard score
+\end{itemize}
+\textbf{What database}
+relational database: not suitable for ranking and heavy update\\
+Redis: works good in memory\\
+so it can do in-memory ranking, using skip list or redis sorted set\\
+\section{Step 3}
+Design Deep Dive\\
+\begin{itemize}
+    \item build service on the cloud\\
+    use AWS lambda API so it can autoscale\\
+    \item storage partition\\
+    can partition by user score [0,100],[100,200]...\\
+    using redis replica\\
+    \item using NoSQL as alternative:\\
+    write heavy, in different partition\\
+    to get top 10, get top 10 of each shard and merge them together\\
+\end{itemize}
+\end{document}

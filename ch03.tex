@@ -1,0 +1,57 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Google Maps}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Step1}
+Understand the problem and establish design scope\\
+\begin{itemize}
+    \item user location update
+    \item navigation service, traveling from one place to another
+    \item map rendering
+\end{itemize}
+Non-funtional requirements:\\
+accuracy\\
+smooth rendering\\
+data and battery usage: use cache, and design how to get maps\\
+Items that need to consider:\\
+\begin{itemize}
+    \item Geohashing: from name of place to location long and lat\\
+    \item Geohashing: 00, 01, 10, 11\\
+    \item Map rendering: retrieve an area\\
+    \item road navigation: A*\\
+    \item hierarchical routing tiles: download one tile at a time\\
+\end{itemize}
+Storage estimation:\\
+Each grid splits into 4:\\
+\begin{equation}
+   50PB + \frac{50}{4}PB+\frac{50}{4*4}PB = 67PB 
+\end{equation}
+Throughput estimation:\\
+1 billion DAU => QPS\\
+\section{Step2}
+Propose High-level Design\\
+two services:\\
+\begin{itemize}
+    \item location service:\\
+    keep sending second-level location to service\\
+    Do not need to do 1-sec, can do multisecond in a batch\\
+    write heavy, can use casssandra\\
+    \item navigation service:\\
+    send a http request, keeps connection\\
+    include start location and destination\\
+    \item a cache service
+\end{itemize}
+Map rendering:\\
+\begin{itemize}
+    \item load a prefixed size tile (as in geohash we have fixed size tile)\\
+    \item use a local cache to cache used tiles\\
+    \item when receiving a request, sending this tile and its 8 surrounding tile to make sure the boundary is included
+\end{itemize}
+\end{document}

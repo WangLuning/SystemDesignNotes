@@ -1,0 +1,72 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Ad Click Event Aggregation}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+\maketitle
+Main idea:\\
+\begin{itemize}
+    \item still the database is the most important thing
+    \item do aggregation and store the data
+    \item need to scale more, so more scaling and map-reduce
+    \item has some TCP latency and data missing issue
+    \item this is an extension of Chapter 5
+\end{itemize}
+\section{Step1}
+Understand the Problem and Establish Design Scope\\
+functional support:\\
+\begin{itemize}
+    \item aggregate $ad_id$ in M minutes
+    \item return top 100 most clicked ads in every minute
+    \item support filter by country, region
+    \item ad click 1 billion per day, so QPS = 10000
+\end{itemize}
+\section{Step2}
+Propose High-level Design\\
+\begin{itemize}
+    \item API1:\\
+    aggregate count
+    \item API2:\\
+    reurn most clicked ad in minute
+    \item data model\\
+    write heavy, not read heavy\\
+    use Casandra or InfluxDB
+\end{itemize}
+High level flow:\\
+\begin{itemize}
+    \item log watcher
+    \item data aggregation service (push mode)\\
+    in push mode, we can use kafka as buffer
+    \item database
+    write two kinds of data:
+    \begin{itemize}
+        \item raw data as cold data
+        \item aggregated data: map-reduce
+    \end{itemize}
+    \item query service
+\end{itemize}
+\section{Step3}
+Design Deep Dive\\
+items to discuss:
+\begin{itemize}
+    \item streaming and batching:\\
+    why we need streaming and batching:\\
+    streaming to process current data, batching to re-process old cold data\\
+    two architecture design:
+    \begin{itemize}
+        \item lambda design, two pipelines, one for batching one for streaming
+        \item kappa design, streaming and batching merged in one pipeline
+    \end{itemize}
+    \item time and aggregation window\\
+    some msg arrive late, getting wrong order and outside window
+    \item delivery guarantee:\\
+    use kafaka queue to guarantee delivery semantics
+    \item scale the system:\\
+    hotspot issue: in map-reduce, a $ad_id$ is too popular
+    \item data monitor and correctness
+    \item fault tolerance
+\end{itemize}
+\end{document}

@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Digital Wallet}
+\author{xxx}
+\date{April 2023}
+
+\begin{document}
+\maketitle
+the single version is simple:\\
+transact from one user's digital wallet to another user's digital wallet\\
+So the main idea of this chapter is how to build reliable distributed system\\
+atomic transaction\\
+\section{Step 1}
+Transaction Per Second (TPS) is high\\
+So we need distributed storage\\
+\section{Step 2}
+Propose High-level Design\\
+\textbf{API design}
+POST balance transfer from one account to another\\
+Sharding solution: several redis, each performing 1000 transactions\\
+if two users are in two different redis, how to ensure it is atomic (succeed in both DB)\\
+can also use relation db, each DB satisfies ACID\\
+but it also needs to ensure atomic between DBs
+\textbf{solution}:\\
+use 2 phase commit\\
+or try-confirm/cancel operation
+\end{document}

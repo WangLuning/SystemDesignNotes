@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{S3-like Object Store}
+\author{xxx}
+\date{April 2023}
+
+\begin{document}
+\maketitle
+no special thing\\
+design a distributed storage\\
+storage system:
+\begin{itemize}
+    \item block storage: low level
+    \item file storage: store names in linked list, separate from file content
+    \item object storage: immutable, no structure, store metadata and data separately
+\end{itemize}
+\section{Step 1}
+Size: 100PB/yr\\
+functions:\\
+\begin{itemize}
+    \item bucket creation
+    \item object upload and download
+    \item object versioning
+    \item list objects in a bucket
+\end{itemize}
+\section{Step 2}
+Propose High-level Design\\
+RESTful API call\\
+metadata store - http call - object store\\
+structure:
+\begin{itemize}
+    \item load balancer
+    \item API service
+    \item identify and access management
+    \item metadata service
+    \item data store service
+\end{itemize}
+\section{Step 3}
+Design Deep Dive\\
+inside data store:\\
+\begin{itemize}
+    \item data routing service
+    \item placement service : receiving heartbeats
+    \item data nodes : primary and secondary
+\end{itemize}
+\textbf{organize small data}\\
+for small data much less than 4kB, it will also consume 4kB block\\
+so merge them together before writing (similar to write ahead log)\\
+to save some space\\
+\textbf{metadata store sharding}\\
+based on user-created bucket-id and object-id\\
+\end{document}

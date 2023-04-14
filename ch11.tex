@@ -1,0 +1,58 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Payment System}
+\author{xxx}
+\date{April 2023}
+
+\begin{document}
+\maketitle
+the original idea is simple
+\begin{itemize}
+    \item pay-in flow: from customer to service
+    \item pay-out flow: from service to seller
+\end{itemize}
+\section{Step 1}
+Understand the Problem and Propose High-level Design\\
+design two flows and think of how to scale it\\
+should be simple
+\section{Step 2}
+Propose High-level Design\\
+\begin{itemize}
+    \item end user
+    \item payment service
+    \item record payment service db
+    \item record ledger db
+    \item record user wallet db
+    \item payment executor
+    \item link to external payment service provider (PSP)
+\end{itemize}
+\textbf{API design}
+\begin{itemize}
+    \item POST payment
+    \item get by specific payment id
+\end{itemize}
+\textbf{database}
+use relational DB to ensure ACID\\
+\section{Step 3}
+Design Deep Dive\\
+\textbf{PSP Integration}\\
+payment service links to  PSP, during this interaction what should we show to users?\\
+\begin{itemize}
+    \item user click checkout (payment not started)
+    \item enter payment service
+    \item communicate with PSP to create payment nonce
+    \item store the returned token
+    \item display payment page to user browser
+    \item user starts payment
+    \item redirect to completion page
+\end{itemize}
+\textbf{reconciliation}\\
+every night PSP confirms with payment DB (ledger and wallet db)\\
+to confirm all payments are correctly recorded\\
+\textbf{Message queue}\\
+from payment service to multiple others\\
+e.g. ledger, wallet, payment service\\
+\textbf{Error handling}\\
+if transient error, use a queue to store it and retry
+\end{document}

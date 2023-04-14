@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{Hotel Reservation System}
+\author{xxx}
+\date{March 2023}
+
+\begin{document}
+\maketitle
+the system wants to check:
+\begin{itemize}
+    \item a simple class design
+    \item concurrency and conflict control
+\end{itemize}
+\section{Step1}
+Understand the Problem and Establish Design Scope\\
+the operations we want to support:
+\begin{itemize}
+    \item view / edit hotel
+    \item view / edit room
+    \item make room reservation
+    \item edit / cancel room reservation
+\end{itemize}
+QPS is low enough
+
+\section{Step2}
+Propose High-Level Design\\
+data model: relational database\\
+high reading and low writing (small num of real reservation)\\
+If we use different microservice to host different request types:
+\begin{itemize}
+    \item hotel service
+    \item room service
+    \item reservation service
+    \item payment service
+\end{itemize}
+database schema:
+\begin{itemize}
+    \item hotel id
+    \item room type id
+    \item date
+    \item total room count
+    \item reserved room count
+\end{itemize}
+Concurrency issue:
+\begin{itemize}
+    \item pessimistic locking
+    \item optimistic locking
+    \item database constraint
+\end{itemize}
+Other possible items to discuss:\\
+\begin{itemize}
+    \item sharding
+    \item caching (may expire)
+\end{itemize}
+\end{document}
